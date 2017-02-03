@@ -15,7 +15,8 @@ int clockPin = 12;
 int dataPin = 11;
 
 //holders for infromation you're going to pass to shifting function
-byte data;
+byte previousData=0;
+byte data=0;
 byte dataArray[10];
 
 void setup() {
@@ -24,36 +25,49 @@ void setup() {
   Serial.begin(9600);
 
   //Binary notation as comment
-  dataArray[0] = 0xFF; //0b11111111
-  dataArray[1] = 0xFE; //0b11111110
-  dataArray[2] = 0xFC; //0b11111100
-  dataArray[3] = 0xF8; //0b11111000
-  dataArray[4] = 0xF0; //0b11110000
-  dataArray[5] = 0xE0; //0b11100000
-  dataArray[6] = 0xC0; //0b11000000
-  dataArray[7] = 0x80; //0b10000000
-  dataArray[8] = 0x00; //0b00000000
-  dataArray[9] = 0xE0; //0b11100000
+  dataArray[0] = 0b00000000;
+  dataArray[1] = 0b00000001;
+  dataArray[2] = 0b00000011;
+  dataArray[3] = 0b00000111;
+  dataArray[4] = 0b00001111;
+  dataArray[5] = 0b00011111;
+  dataArray[6] = 0b00111111;
+  dataArray[7] = 0b01111111;
+  dataArray[8] = 0b11111111;
 
   //function that blinks all the LEDs
   //gets passed the number of blinks and the pause time
-  blinkAll_2Bytes(2,500);
+  //blinkAll_2Bytes(2,500);
 }
 
 void loop() {
-
-  for (int j = 0; j < 10; j++) {
+  //blinkAll_2Bytes(2,50);
     //load the light sequence you want from array
-    data = dataArray[j];
-    //ground latchPin and hold low for as long as you are transmitting
+    //data = dataArray[j];
+    data = random(0,9);
+    // ADD SMOOTHNESS !!!
+    if (previousData > data){
+      for (int x = previousData; x > data; x--){
+        digitalWrite(latchPin, 0);
+        shiftOut(dataPin, clockPin, dataArray[x]);
+        digitalWrite(latchPin, 1);
+        delay(10);
+      }
+    }else if (previousData < data ){
+      for (int x = previousData; x < data; x++){
+        digitalWrite(latchPin, 0);
+        shiftOut(dataPin, clockPin, dataArray[x]);
+        digitalWrite(latchPin, 1);
+        delay(10);
+      }
+    }
+    
     digitalWrite(latchPin, 0);
-    //move 'em out
-    shiftOut(dataPin, clockPin, data);
-    //return the latch pin high to signal chip that it
-    //no longer needs to listen for information
+    shiftOut(dataPin, clockPin, dataArray[data]);
     digitalWrite(latchPin, 1);
-    delay(300);
-  }
+    delay(50);
+    previousData = data;
+  
 }
 
 
@@ -115,7 +129,7 @@ void blinkAll_2Bytes(int n, int d) {
   shiftOut(dataPin, clockPin, 0);
   shiftOut(dataPin, clockPin, 0);
   digitalWrite(latchPin, 1);
-  delay(200);
+  delay(500);
   for (int x = 0; x < n; x++) {
     digitalWrite(latchPin, 0);
     shiftOut(dataPin, clockPin, 255);
