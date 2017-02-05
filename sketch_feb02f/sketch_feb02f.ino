@@ -14,10 +14,13 @@ int clockPin = 12;
 ////Pin connected to DS of 74HC595
 int dataPin = 11;
 
+//Analog in
+int potPin = 0;
+
 //holders for infromation you're going to pass to shifting function
 byte previousData=0;
 byte data=0;
-byte dataArray[10];
+byte dataArray[18];
 
 void setup() {
   //set pins to output because they are addressed in the main loop
@@ -25,7 +28,7 @@ void setup() {
   Serial.begin(9600);
 
   //Binary notation as comment
-  dataArray[0] = 0b00000000;
+  dataArray[0]  = 0b00000000;
   dataArray[1] = 0b00000001;
   dataArray[2] = 0b00000011;
   dataArray[3] = 0b00000111;
@@ -34,6 +37,16 @@ void setup() {
   dataArray[6] = 0b00111111;
   dataArray[7] = 0b01111111;
   dataArray[8] = 0b11111111;
+  dataArray[9] = 0b11111111;
+//  dataArray[0] = 0b00011000;
+//  dataArray[1] = 0b00111100;
+//  dataArray[2] = 0b01111110;
+//  dataArray[3] = 0b11111111;
+//  dataArray[4] = 0b11000000;
+//  dataArray[5] = 0b00110000;
+//  dataArray[6] = 0b00001100;
+//  dataArray[7] = 0b00000011;
+//  dataArray[8] = 0b11111111;
 
   //function that blinks all the LEDs
   //gets passed the number of blinks and the pause time
@@ -44,22 +57,35 @@ void loop() {
   //blinkAll_2Bytes(2,50);
     //load the light sequence you want from array
     //data = dataArray[j];
-    data = random(0,9);
+    //data = random(9,18);
+    data = analogRead(potPin)/100;
+
     // ADD SMOOTHNESS !!!
+    if ( data >=9 ){
+          digitalWrite(latchPin, 0);
+          shiftOut(dataPin, clockPin, dataArray[9]);
+          digitalWrite(latchPin, 1);
+          delay(100);
+          digitalWrite(latchPin, 0);
+          shiftOut(dataPin, clockPin, dataArray[0]);
+          digitalWrite(latchPin, 1);
+          delay(100);
+    }else {
     if (previousData > data){
       for (int x = previousData; x > data; x--){
         digitalWrite(latchPin, 0);
         shiftOut(dataPin, clockPin, dataArray[x]);
         digitalWrite(latchPin, 1);
-        delay(10);
+        delay(20);
       }
     }else if (previousData < data ){
       for (int x = previousData; x < data; x++){
         digitalWrite(latchPin, 0);
         shiftOut(dataPin, clockPin, dataArray[x]);
         digitalWrite(latchPin, 1);
-        delay(10);
+        delay(20);
       }
+    }
     }
     
     digitalWrite(latchPin, 0);
